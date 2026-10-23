@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8efd8">
+  <meta name="description" content="BIT//BREAK — a pixel-art puzzle platformer set at MIT-WPU.">
+  <title>BIT//BREAK — Campus of Puzzles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-frame">
+    <header class="topbar">
+      <a class="campus-mark" href="#top" aria-label="BIT Break home"><strong>MIT-WPU</strong><span>CAMPUS SECTOR 01</span></a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#about" data-open="about">ABOUT</a><i></i>
+        <a href="#controls" data-open="controls">CONTROLS</a><i></i>
+        <a href="#credits" data-open="credits">CREDITS</a><i></i>
+        <button class="settings-button" id="settingsButton" aria-label="Open settings" title="Settings">⚙</button>
+      </nav>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation">☰</button>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="gameTitle">
+        <div class="hero-skyline" aria-hidden="true"><span class="cloud cloud-one"></span><span class="cloud cloud-two"></span><span class="spark spark-one">✦</span><span class="spark spark-two">✧</span></div>
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="status-dot"></span> A CAMPUS ADVENTURE • SAVE POINT 01</div>
+          <h1 id="gameTitle">BIT<span>//</span>BREAK</h1>
+          <p class="tagline">SAME CAMPUS. <strong>NEW PERSPECTIVE.</strong></p>
+          <div class="genre-label">A PUZZLE PLATFORMER SET AT MIT-WPU</div>
+          <p class="hero-description">Lectures by day. Logic puzzles by... whenever this campus lets you leave.</p>
+          <div class="micro-note"><span>↳</span> No attendance marks lost in the making of this game.</div>
+        </div>
+
+        <div class="hero-actions">
+          <button class="button button-primary" id="playButton"><span class="play-triangle">▶</span> PLAY GAME</button>
+          <button class="button button-secondary" id="howToPlayButton">HOW TO PLAY</button>
+        </div>
+
+        <div class="campus-sign sign-left" aria-hidden="true"><span>▤</span> LIBRARY <b>→</b></div>
+        <div class="campus-sign sign-right" aria-hidden="true"><span>⌂</span> MIT-WPU</div>
+        <div class="student-scene" aria-label="A student ready to explore campus">
+          <div class="speech-bubble">PUZZLES.<br>IDEAS.<br>DEADLINES.<br><strong>ESCAPE?</strong><span class="bubble-tail"></span></div>
+          <div class="student-shadow"></div>
+          <img class="student-avatar student-sprite" src="character.png" alt="Pixel-art MIT-WPU student with a backpack and lanyard" width="128" height="128" decoding="async">
+          <div class="student-caption">PLAYER 01 <span>• MIT-WPU STUDENT</span></div>
+        </div>
+        <div class="hero-bottom-strip" aria-hidden="true"><span>WASD / ARROWS TO MOVE</span><span>SPACE TO JUMP</span><span>ESC TO PAUSE</span></div>
+      </section>
+
+      <section class="abilities-section" id="about" aria-labelledby="abilitiesTitle">
+        <div class="section-heading">
+          <div class="section-title-wrap"><span class="pixel-cube" aria-hidden="true">▦</span><div><h2 id="abilitiesTitle">CORE ABILITIES</h2><p>Computer science, but make it playable.</p></div></div>
+          <div class="built-on"><span aria-hidden="true">▣</span> BUILT ON CS CONCEPTS <b>✣</b></div>
+        </div>
+        <div class="ability-grid">
+          <article class="ability-card">
+            <div class="card-topline"><span>01</span><span class="card-icon">↻</span></div>
+            <div class="ability-art art-replay" aria-hidden="true"><span class="mini-student">🧑🏻‍🎓</span><span class="ghost">🧑🏻‍🎓</span><span class="ghost ghost-two">🧑🏻‍🎓</span><span class="ghost ghost-three">🧑🏻‍🎓</span><span class="art-arrow">→</span></div>
+            <h3>COMMIT &amp; REPLAY</h3><p>Record up to 10 seconds of movement. Your ghost repeats the actions in a loop. Keep up to 3 ghosts.</p><div class="tags"><span>GHOSTS</span><span>LOOPS</span><span>PLATFORMS</span></div>
+          </article>
+          <article class="ability-card">
+            <div class="card-topline"><span>02</span><span class="card-icon">▧</span></div>
+            <div class="ability-art art-copy" aria-hidden="true"><span class="crate crate-dashed">▧</span><b>➜</b><span class="crate">▧</span></div>
+            <h3>COPY / PASTE</h3><p>Copy a crate, platform or spring. Paste it where your plan needs it. Clipboard space is limited.</p><div class="tags"><span>OBJECTS</span><span>CREATIVE</span><span>LIMITED USES</span></div>
+          </article>
+          <article class="ability-card">
+            <div class="card-topline"><span>03</span><span class="card-icon">⌘Z</span></div>
+            <div class="ability-art art-rewind" aria-hidden="true"><span class="rewind-symbol">⇦</span><span class="mini-student">🧑🏻‍🎓</span><span class="ghost">🧑🏻‍🎓</span><span class="ghost ghost-two">🧑🏻‍🎓</span></div>
+            <h3>CTRL + Z</h3><p>Rewind the last 3 seconds. Undo a mistake and try another approach. Rewinds are limited per level.</p><div class="tags"><span>REWIND</span><span>DO-OVER</span><span>STRATEGY</span></div>
+          </article>
+          <article class="ability-card">
+            <div class="card-topline"><span>04</span><span class="card-icon">∧</span></div>
+            <div class="ability-art art-gates" aria-hidden="true"><span class="signal signal-red"></span><span class="signal signal-green"></span><span class="wire"></span><span class="gate">AND</span><span class="wire wire-out"></span><span class="door">♟</span></div>
+            <h3>LOGIC GATES</h3><p>Wire switches through AND, OR and NOT gates. Sometimes the only way forward is to work with your past self.</p><div class="tags"><span>AND / OR / NOT</span><span>CIRCUITS</span><span>PUZZLES</span></div>
+          </article>
+          <article class="ability-card">
+            <div class="card-topline"><span>05</span><span class="card-icon">▣</span></div>
+            <div class="ability-art art-id" aria-hidden="true"><span class="mini-student">🧑🏻‍🎓</span><span class="throw-arc"></span><span class="id-token">▰</span><span class="switch-token">●</span></div>
+            <h3>THE STUDENT ID</h3><p>Your lanyard opens turnstiles. Throw it like a boomerang to hit distant switches — but don't lose it!</p><div class="tags"><span>LANYARD</span><span>SWITCHES</span><span>EXPLORATION</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="campus-note" id="credits">
+        <div class="note-icon">✦</div><div><h2>ONE CAMPUS. A LOT OF SIDE QUESTS.</h2><p>Made by students, inspired by campus life, powered by questionable deadline decisions.</p></div><span class="note-stamp">MIT-WPU<br>PLAYER CLUB</span>
+      </section>
+    </main>
+    <footer><span>BIT//BREAK © 2026</span><span>MADE BETWEEN LECTURES <b>♥</b></span><span>CHECKPOINT SAVED? <strong>NOT YET.</strong></span></footer>
+  </div>
+
+  <dialog id="infoDialog" class="info-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close dialog">×</button></form><div class="dialog-kicker">BIT//BREAK FIELD GUIDE</div><h2 id="dialogTitle">HOW TO PLAY</h2><div id="dialogContent" class="dialog-content"></div><button class="button button-primary dialog-ok" id="dialogOk">GOT IT</button></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="landing.js" defer></script>
+</body>
+</html>
