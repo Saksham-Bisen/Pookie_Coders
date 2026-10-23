@@ -8,6 +8,7 @@ export interface LevelCompletePayload {
   star: boolean;
   undosUsed?: number;
   cardThrows?: number;
+  pastesUsed?: number;
 }
 
 export interface PixaEvents {
@@ -23,12 +24,15 @@ export interface PixaEvents {
   'player:died': { x: number; y: number; cause: string };
   'timer:start': { frame: number };
   'level:complete': LevelCompletePayload;
-  // Owned by other laptops; declared here so every level shares one event map.
-  'clipboard:copy': { id: string };
-  'clipboard:paste': { id: string };
+  // Shared by every level so all levels use one event map.
+  'clipboard:copy': { id: string; kind: string };
+  'clipboard:paste': { id: string; kind: string };
   'undo:used': { remaining: number };
-  'card:thrown': { dir: number };
+  'card:thrown': { dx: number; dy: number };
   'card:returned': Record<string, never>;
+  'card:stuck': { x: number; y: number };
+  'card:lost': { x: number; y: number };
+  'switch:on': { id: string };
   'popup:closed': { id: string };
 }
 

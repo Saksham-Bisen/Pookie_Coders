@@ -29,6 +29,13 @@ export class Collider {
 
   constructor(private map: LevelMap) {}
 
+  get widthTiles(): number {
+    return this.map.width;
+  }
+  get heightTiles(): number {
+    return this.map.height;
+  }
+
   isSolidTile(tx: number, ty: number): boolean {
     const { width, height } = this.map;
     if (tx < 0 || tx >= width || ty < 0 || ty >= height) return true;

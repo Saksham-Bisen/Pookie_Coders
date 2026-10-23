@@ -1,11 +1,14 @@
 import { FPS } from '../constants';
 import type { Body } from '../physics/Body';
 import type { Collider, DynamicSolid } from '../physics/Collider';
+import { pushOutSideways } from '../physics/pushOut';
 import { overlaps, type Rect } from '../physics/Rect';
 
 export interface GateOptions {
   /** Seconds to fully open or close. */
   openTime?: number;
+  /** Once powered, stays powered (an unlocked door). */
+  latch?: boolean;
 }
 
 /**
@@ -18,9 +21,11 @@ export class Gate implements DynamicSolid {
   progress = 0;
   powered = false;
   private readonly step: number;
+  readonly latch: boolean;
 
   constructor(readonly id: string, readonly area: Rect, opts: GateOptions = {}) {
     this.step = 1 / Math.max(1, Math.round((opts.openTime ?? 0.3) * FPS));
+    this.latch = opts.latch ?? false;
   }
 
   get isOpen(): boolean {
@@ -32,6 +37,7 @@ export class Gate implements DynamicSolid {
 
   /** Sets the logic input. Returns 'open'/'close' on change. */
   setPowered(on: boolean): 'open' | 'close' | null {
+    if (this.latch && this.powered) return null;
     if (on === this.powered) return null;
     this.powered = on;
     return on ? 'open' : 'close';
@@ -49,17 +55,6 @@ export class Gate implements DynamicSolid {
     else if (this.progress > target) this.progress = Math.max(0, this.progress - this.step);
     const r = this.rect();
     if (!r) return;
-    for (const b of bodies) if (overlaps(b, r)) this.pushOut(b, r, collider);
-  }
-
-  /** Push the body to the side its centre is on; if that side is blocked, the other side. */
-  private pushOut(b: Body, r: Rect, collider: Collider): void {
-    const leftX = r.x - b.w;
-    const rightX = r.x + r.w;
-    const preferLeft = b.x + b.w / 2 <= r.x + r.w / 2;
-    const fits = (x: number) => !collider.hitsSolid({ x, y: b.y, w: b.w, h: b.h }, [this.tag]);
-    const order = preferLeft ? [leftX, rightX] : [rightX, leftX];
-    b.x = order.find(fits) ?? order[0];
-    b.vx = 0;
+    for (const b of bodies) if (overlaps(b, r)) pushOutSideways(b, r, collider, [this.tag]);
   }
 }

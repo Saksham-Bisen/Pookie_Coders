@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+cd "$ROOT/Level-1_UI"
+
+exec pnpm exec vite --host "${FIGMA_DEV_SERVER_HOST:-0.0.0.0}" --port "$PORT"

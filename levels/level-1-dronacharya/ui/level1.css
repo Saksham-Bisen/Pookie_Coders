@@ -1,0 +1,112 @@
+/* Level 1 styles. Tokens, text styles and animations come from the Figma design
+   ("Design Relay Race Level/Level-1_UI/src/index.css"). Fonts load in index.html. */
+
+:root {
+  --ink: #171925;
+  --ink-raised: #202333;
+  --paper: #f7ebca;
+  --cyan: #55d9d2;
+  --sky-cloud: #ffe1b0;
+  --page: #11131c;
+}
+
+.game-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    var(--page);
+  background-size: 24px 24px;
+}
+
+.game-frame {
+  display: block;
+  /* Fit 16:9 inside the window. */
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: auto;
+  background: var(--ink);
+  box-shadow: 0 0 0 5px #202333, 0 20px 55px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+
+.pixel-text {
+  fill: var(--paper);
+  font-family: 'Silkscreen', monospace;
+  paint-order: stroke;
+}
+
+.banner-text { fill: #272735; font-size: 22px; font-weight: 700; }
+.board-small { fill: #a9a9b3; font-size: 8px; }
+.board-main { font-size: 17px; font-weight: 700; }
+.gate-label { fill: #f1cf79; font-size: 12px; font-weight: 700; }
+.track-label { fill: #352f3d; font-size: 11px; font-weight: 700; }
+.ghost-hash { fill: #baffce; font-size: 9px; }
+.hud-number { fill: #202333; font-size: 28px; font-weight: 700; }
+.hud-title { font-size: 16px; font-weight: 700; }
+.hud-venue { fill: #aeb2c0; font-size: 9px; }
+.hud-label { fill: #bec1ce; font-size: 11px; }
+.hud-time { font-size: 18px; font-weight: 700; }
+.hud-chip { fill: #f4d36f; font-size: 15px; font-weight: 700; }
+.key-r { fill: #fff2c4; font-size: 13px; }
+.toast-mark { fill: #202333; font-size: 20px; font-weight: 700; }
+.toast-text { font-size: 14px; white-space: pre; }
+.intro-kicker,
+.result-kicker { fill: #55d9d2; font-size: 18px; letter-spacing: 5px; }
+.intro-title,
+.result-title { fill: #f5dc93; font-size: 38px; font-weight: 700; }
+.intro-goal { font-size: 17px; }
+.intro-hint { fill: #9ea2b3; font-size: 10px; letter-spacing: 2px; }
+.result-time { font-size: 34px; font-weight: 700; }
+.result-label { fill: #9ea2b3; font-size: 9px; letter-spacing: 2px; }
+.result-stat { fill: #aeb2c0; font-size: 12px; }
+.result-stat-value { fill: #70e69a; font-size: 18px; font-weight: 700; }
+.earned-note { fill: #f5d56f; font-size: 16px; }
+.missed-note { fill: #e98a7b; font-size: 13px; }
+
+/* Added for the playable build (not in the static design). */
+.rec-text { fill: #e86655; font-size: 11px; font-weight: 700; }
+.death-title { fill: #e86655; font-size: 26px; font-weight: 700; }
+.prompt-text { fill: #f5dc93; font-size: 14px; letter-spacing: 3px; }
+.upload-text { font-size: 11px; letter-spacing: 2px; }
+.upload-sending { fill: #9ea2b3; }
+.upload-sent { fill: #70e69a; }
+.upload-queued { fill: #f1cf79; }
+.prompt-blink,
+.rec-blink { animation: blink 900ms steps(2) infinite; }
+
+.wire-powered { filter: drop-shadow(0 0 7px #55f2df); }
+.wire-flow { animation: wire-flow 650ms linear infinite; }
+.lock-open { filter: drop-shadow(0 0 6px #75e788); animation: lock-pulse 900ms steps(2) infinite; }
+.crowd-delay-1 { animation-delay: -400ms; }
+.cheer-arm-left { transform-origin: right top; animation: arm-left 800ms steps(2) infinite; }
+.cheer-arm-right { transform-origin: left top; animation: arm-right 800ms steps(2) infinite; }
+.bit-idle { transform-box: fill-box; transform-origin: bottom center; animation: idle 900ms steps(2) infinite; }
+.ghost-flicker { animation: ghost-flicker 900ms steps(2) infinite; }
+.star-earned {
+  filter: drop-shadow(0 0 12px #f5ce62);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: star-pop 1100ms steps(3) infinite;
+}
+
+@keyframes wire-flow { to { stroke-dashoffset: -24px; } }
+@keyframes lock-pulse { 50% { opacity: 0.65; } }
+@keyframes arm-left { 50% { transform: rotate(35deg) translate(-3px, -4px); } }
+@keyframes arm-right { 50% { transform: rotate(-35deg) translate(3px, -4px); } }
+@keyframes idle { 50% { transform: translateY(-2px); } }
+@keyframes ghost-flicker { 50% { opacity: 0.62; } }
+@keyframes star-pop { 50% { transform: scale(1.12); } }
+@keyframes blink { 50% { opacity: 0.25; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

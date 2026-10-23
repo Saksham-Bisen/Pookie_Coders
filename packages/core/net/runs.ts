@@ -10,6 +10,7 @@ export interface RunPayload {
   star: number; // 0/1, matches the SQLite column
   undosUsed: number;
   cardThrows: number;
+  pastesUsed: number;
 }
 
 export interface RunClientOptions {
@@ -17,6 +18,14 @@ export interface RunClientOptions {
   fetch?: typeof fetch;
   storage?: Pick<Storage, 'getItem' | 'setItem'> | null;
   timeoutMs?: number;
+}
+
+/** Backend for run uploads: VITE_API_URL, else port 3000 on the host serving the game. */
+export function defaultApiUrl(): string {
+  const env = (import.meta as { env?: Record<string, string | undefined> }).env;
+  if (env?.VITE_API_URL) return env.VITE_API_URL;
+  const host = typeof location !== 'undefined' && location.hostname ? location.hostname : 'localhost';
+  return `http://${host}:3000`;
 }
 
 const QUEUE_KEY = 'pixa.pendingRuns';
@@ -40,6 +49,7 @@ export function toRunPayload(r: LevelCompletePayload, code: string | null): RunP
     star: r.star ? 1 : 0,
     undosUsed: r.undosUsed ?? 0,
     cardThrows: r.cardThrows ?? 0,
+    pastesUsed: r.pastesUsed ?? 0,
   };
 }
 

@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import { BASE_HEIGHT, BASE_WIDTH, FRAME_MS, PALETTE, PLAYER_W } from '@pixa/core/constants';
+import { BASE_HEIGHT, BASE_WIDTH, PALETTE, PLAYER_W } from '@pixa/core/constants';
 import { GHOST_COLORS, HEADING_FONT, Hud, HUD_FONT } from '@pixa/core/hud/Hud';
 import { KeyboardInput } from '@pixa/core/input/KeyboardInput';
 import type { MapObject } from '@pixa/core/map/TiledMap';
-import { submitRun } from '@pixa/core/net/runs';
-import type { AnimState } from '@pixa/core/recorder/Recorder';
+import { defaultApiUrl, submitRun } from '@pixa/core/net/runs';
+import { BIT_PALETTE, drawBit, DRAFT_PALETTE, flatPalette } from '@pixa/core/render/drawBit';
+import { FixedStepper } from '@pixa/core/scene/FixedStepper';
 import type { LevelWorld } from '@pixa/core/world/LevelWorld';
 import { createLevel1World } from './createWorld';
 import { Level1Hints } from './hints';
@@ -22,12 +23,8 @@ const C = {
   concrete: 0x8c8fa3,
   concreteDark: 0x5d6075,
   skin: 0xe0a070,
-  hair: 0x2a1a14,
-  legs: 0x2b3266,
 };
 
-const API_URL: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? `http://${location.hostname || 'localhost'}:3000`;
 
 export class Level1Scene extends Phaser.Scene {
   private world!: LevelWorld;
@@ -37,7 +34,7 @@ export class Level1Scene extends Phaser.Scene {
   private dyn!: Phaser.GameObjects.Graphics;
   private crowd!: Phaser.GameObjects.Graphics;
   private labels = new Map<string, Phaser.GameObjects.Text>();
-  private acc = 0;
+  private stepper!: FixedStepper;
   private anim = 0;
 
   constructor() {
@@ -45,11 +42,16 @@ export class Level1Scene extends Phaser.Scene {
   }
 
   create(): void {
-    this.acc = 0;
     this.labels.clear();
     this.world = createLevel1World();
     this.hints = new Level1Hints(this.world);
     this.input2 = new KeyboardInput(this);
+    // Fixed 60 fps timestep so ghosts replay exactly on every laptop.
+    this.stepper = new FixedStepper(() => {
+      this.world.step(this.input2.read());
+      if (!this.world.finished) this.hints.update();
+      this.anim++;
+    });
     const map = this.world.map;
 
     this.cameras.main.setBounds(0, 0, map.pixelWidth, map.pixelHeight).setBackgroundColor(C.navy);
@@ -62,7 +64,8 @@ export class Level1Scene extends Phaser.Scene {
     this.hud = new Hud(this, {
       level: `${config.id} · ${config.name}`,
       venue: config.venue,
-      starTargetSec: config.star.type === 'time' ? config.star.value : undefined,
+      starChip: config.star.type === 'time' ? `★ < 0:${config.star.value}` : undefined,
+      keyHints: '[R] Commit',
       maxCommits: config.limits.maxGhosts,
       show: { commits: config.mechanics.commit, clipboard: false, undo: false, idCard: false },
     });
@@ -76,24 +79,19 @@ export class Level1Scene extends Phaser.Scene {
         timeMs: r.timeMs,
         stats: [`ghosts ${r.ghostsUsed}`, `deaths ${r.deaths}`],
         star: r.star,
-        missReason: `Run under ${config.star.type === 'time' ? config.star.value : 30}s for the star`,
-      });
-      void submitRun(r, { baseUrl: API_URL });
+        missReason: `Run under 0:${config.star.type === 'time' ? config.star.value : 30} for the star`,
+      }, config.next ? 'ENTER again   N next level' : 'ENTER  play again');
+      void submitRun(r, { baseUrl: defaultApiUrl() });
     });
 
-    this.input.keyboard!.on('keydown-ENTER', () => this.world.finished && this.scene.restart());
-    this.input.keyboard!.on('keydown-BACKSPACE', () => this.scene.restart());
+    const kb = this.input.keyboard!;
+    kb.on('keydown-ENTER', () => (this.world.finished || this.hud.paused) && this.scene.restart());
+    kb.on('keydown-N', () => this.world.finished && config.next && this.scene.get(config.next) && this.scene.start(config.next));
+    kb.on('keydown-ESC', () => !this.world.finished && this.hud.togglePause());
   }
 
   update(_time: number, delta: number): void {
-    // Fixed 60 fps timestep so ghosts replay exactly on every laptop.
-    this.acc += Math.min(delta, 100);
-    while (this.acc >= FRAME_MS) {
-      this.acc -= FRAME_MS;
-      this.world.step(this.input2.read());
-      if (!this.world.finished) this.hints.update();
-      this.anim++;
-    }
+    if (!this.hud.paused) this.stepper.advance(delta);
     this.render();
   }
 
@@ -159,7 +157,7 @@ export class Level1Scene extends Phaser.Scene {
     for (const gh of w.ghosts.ghosts) {
       const f = gh.frame;
       const color = GHOST_COLORS[gh.slot % 3];
-      this.drawBit(g, f.x, f.y, f.facing, f.anim, { body: color, skin: color, hair: color, legs: color }, 0.5);
+      drawBit(g, f.x, f.y, { facing: f.facing, anim: f.anim, tick: this.anim, palette: flatPalette(color), alpha: 0.5 });
       live.add(gh.id);
       let label = this.labels.get(gh.id);
       if (!label) {
@@ -173,11 +171,8 @@ export class Level1Scene extends Phaser.Scene {
     // Bit (tinted with a REC dot while he is a draft).
     const pl = w.player;
     const draft = pl.draft;
-    this.drawBit(g, p.x, p.y, pl.facing, pl.anim, draft
-      ? { body: 0xff7a85, skin: 0xffb0a0, hair: 0x6a1a24, legs: 0x8a2040 }
-      : { body: C.orange, skin: C.skin, hair: C.hair, legs: C.legs }, 1);
+    drawBit(g, p.x, p.y, { facing: pl.facing, anim: pl.anim, tick: this.anim, palette: draft ? DRAFT_PALETTE : BIT_PALETTE, cursor: !draft });
     if (draft && Math.floor(this.anim / 15) % 2 === 0) g.fillStyle(C.red).fillCircle(p.x + PLAYER_W + 3, p.y - 1, 2);
-    if (!draft && Math.floor(this.anim / 30) % 2 === 0) g.fillStyle(C.white).fillRect(p.x + PLAYER_W / 2 - 1, p.y - 6, 1, 3);
 
     this.hud.update({
       timeMs: w.timeMs,
@@ -187,24 +182,6 @@ export class Level1Scene extends Phaser.Scene {
       commits: w.ghosts.ghosts.map((x) => ({ id: x.id, slot: x.slot })),
     });
     if (!w.finished) this.hud.setToast(this.hints.current?.text ?? null);
-  }
-
-  /** 16x24 Bit drawn around his 10x22 hitbox. */
-  private drawBit(
-    g: Phaser.GameObjects.Graphics, x: number, y: number, facing: 1 | -1, anim: AnimState,
-    c: { body: number; skin: number; hair: number; legs: number }, alpha: number,
-  ): void {
-    x = Math.round(x) - 3;
-    y = Math.round(y) - 2;
-    const run = anim === 'run' ? Math.floor(this.anim / 5) % 2 : 0;
-    g.fillStyle(c.legs, alpha);
-    if (anim === 'jump' || anim === 'fall') g.fillRect(x + 4, y + 18, 3, 4).fillRect(x + 9, y + 17, 3, 4);
-    else g.fillRect(x + 4 + run, y + 18, 3, 6).fillRect(x + 9 - run, y + 18, 3, 6);
-    g.fillStyle(c.body, alpha).fillRect(x + 3, y + 10, 10, 9); // hoodie
-    g.fillStyle(c.skin, alpha).fillRect(x + 4, y + 2, 8, 8); // head
-    g.fillStyle(c.hair, alpha).fillRect(x + 4, y + 1, 8, 3);
-    g.fillStyle(C.navy, alpha).fillRect(facing > 0 ? x + 9 : x + 5, y + 5, 2, 2); // eye
-    g.fillStyle(C.cyan, alpha).fillRect(x + 7, y + 11, 2, 4); // lanyard + ID
   }
 
   // ----------------------------------------------------------------- static

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+cd "$ROOT/Level-1_UI"
+
+# Build in development mode to emit sourcemaps.
+pnpm run build --mode development
+figma make deploy-preview --build-dir "$ROOT/Level-1_UI/dist"

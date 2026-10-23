@@ -2,43 +2,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { Bug } from './entities/Bug';
 import { Button } from './entities/Button';
 import { Gate } from './entities/Gate';
+import { Turnstile } from './entities/Turnstile';
 import { EventBus, type PixaEvents } from './events';
 import { GhostManager } from './ghosts/GhostManager';
 import { action } from './input/ActionFrame';
-import type { LevelConfig } from './level/LevelConfig';
 import { LogicGraph } from './logic/LogicGraph';
-import { parseTiledMap, type TiledMapJson } from './map/TiledMap';
 import { submitRun } from './net/runs';
 import { createBody } from './physics/Body';
 import { Collider } from './physics/Collider';
 import { Recorder, type Commit } from './recorder/Recorder';
+import { testConfig, testMap } from './testing/testMaps';
 import { LevelWorld } from './world/LevelWorld';
 
-/** 20x6 flat test map: floor on row 5. */
-function flatMap(extraObjects: object[] = []) {
-  const W = 20, H = 6;
-  const data = new Array(W * H).fill(0);
-  for (let x = 0; x < W; x++) data[5 * W + x] = 1;
-  const json = {
-    width: W, height: H, tilewidth: 16, tileheight: 16,
-    layers: [
-      { name: 'solid', type: 'tilelayer', width: W, height: H, data, properties: [{ name: 'collision', type: 'bool', value: true }] },
-      { name: 'objects', type: 'objectgroup', objects: [
-        { id: 1, name: 'spawn', type: 'spawn', x: 24, y: 80, width: 0, height: 0, point: true },
-        { id: 2, name: 'exit', type: 'exit', x: 288, y: 48, width: 16, height: 32 },
-        ...extraObjects,
-      ] },
-    ],
-  } as TiledMapJson;
-  return parseTiledMap(json);
-}
-
-const cfg = (over: Partial<LevelConfig> = {}): LevelConfig => ({
-  id: 'T', name: 'Test', venue: 'Test', map: '',
-  mechanics: { commit: true, clipboard: false, undo: false, idCard: false },
-  limits: { maxGhosts: 3, recordSeconds: 10, clipboardLimit: 0, undoLimit: 0 },
-  logic: [], star: { type: 'time', value: 30 }, next: null, ...over,
-});
+const flatMap = (extraObjects: object[] = []) => testMap({ objects: extraObjects });
+const cfg = testConfig;
 
 const fakeCommit = (id: string, n = 3): Commit => ({
   id, startX: 0, startY: 0, createdAt: 0,
@@ -151,6 +128,15 @@ describe('Gate', () => {
     expect(bit.y).toBe(58); // pushed sideways, never crushed
   });
 
+  it('latch: stays open after power goes away', () => {
+    const col = new Collider(flatMap());
+    const gate = new Gate('g', { x: 160, y: 48, w: 16, h: 32 }, { latch: true });
+    expect(gate.setPowered(true)).toBe('open');
+    expect(gate.setPowered(false)).toBeNull();
+    for (let i = 0; i < 30; i++) gate.update([], col);
+    expect(gate.isOpen).toBe(true);
+  });
+
   it('blocks movement when closed', () => {
     const col = new Collider(flatMap());
     const gate = new Gate('g', { x: 160, y: 48, w: 16, h: 32 });
@@ -158,6 +144,21 @@ describe('Gate', () => {
     const bit = createBody(140, 58, 10, 22);
     for (let i = 0; i < 20; i++) col.moveX(bit, 2);
     expect(bit.x).toBe(150);
+  });
+});
+
+describe('Turnstile', () => {
+  it('is solid without the card and pushes Bit into the room when it shuts on him', () => {
+    const col = new Collider(flatMap());
+    const t = new Turnstile('t', { x: 16, y: 48, w: 16, h: 32 }, 1);
+    col.dynamics.push(t);
+    t.update(true, [], col);
+    expect(col.hitsSolid({ x: 20, y: 60, w: 4, h: 4 })).toBe(false);
+    const bit = createBody(18, 58, 10, 22);
+    t.update(false, [bit], col);
+    expect(col.hitsSolid({ x: 20, y: 60, w: 4, h: 4 })).toBe(true);
+    expect(bit.x).toBe(32);
+    expect(bit.y).toBe(58);
   });
 });
 
@@ -211,6 +212,34 @@ describe('LogicGraph', () => {
     g.setInput('b', true);
     g.evaluate();
     expect(g.value('door')).toBe(true);
+  });
+
+  it('chains AND -> AND (the Level 2 circuit) and mixes OR / NOT', () => {
+    const g = new LogicGraph([
+      { id: 'A', type: 'button' }, { id: 'B', type: 'button' }, { id: 'sw', type: 'switch' },
+      { id: 'and_1', type: 'AND', in: ['A', 'B'] }, { id: 'door_and', type: 'AND', in: ['and_1', 'sw'] },
+      { id: 'door', type: 'door', in: 'door_and' },
+      { id: 'notA', type: 'NOT', in: ['A'] }, { id: 'any', type: 'OR', in: ['notA', 'sw'] }, { id: 'laser', type: 'laser', in: 'any' },
+    ]);
+    const cases: [boolean, boolean, boolean, boolean, boolean][] = [
+      // A, B, sw -> door, laser
+      [false, false, false, false, true],
+      [true, true, false, false, false],
+      [true, false, true, false, true],
+      [true, true, true, true, true],
+    ];
+    for (const [a, b, sw, door, laser] of cases) {
+      g.setInput('A', a); g.setInput('B', b); g.setInput('sw', sw);
+      g.evaluate();
+      expect([g.value('door'), g.value('laser')]).toEqual([door, laser]);
+    }
+    expect(g.wires()).toContainEqual(['and_1', 'door_and']);
+  });
+
+  it('rejects logic loops', () => {
+    expect(() => new LogicGraph([
+      { id: 'a', type: 'AND', in: ['b'] }, { id: 'b', type: 'AND', in: ['a'] },
+    ])).toThrow(/loop/);
   });
 
   it('rejects unknown wires', () => {

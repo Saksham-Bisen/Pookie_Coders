@@ -16,6 +16,7 @@ interface TiledObjectJson {
   width: number;
   height: number;
   point?: boolean;
+  polyline?: { x: number; y: number }[];
   properties?: TiledProperty[];
 }
 
@@ -49,6 +50,8 @@ export interface MapObject {
   w: number;
   h: number;
   point: boolean;
+  /** Absolute points for polyline objects (wires), else undefined. */
+  points?: { x: number; y: number }[];
   props: Record<string, unknown>;
 }
 
@@ -107,6 +110,7 @@ export function parseTiledMap(json: TiledMapJson): LevelMap {
           w: o.width,
           h: o.height,
           point: !!o.point,
+          points: o.polyline?.map((p) => ({ x: o.x + p.x, y: o.y + p.y })),
           props: propsOf(o.properties),
         });
       }
